@@ -9,24 +9,50 @@
     android:backgroundTint="#050505"
     tools:context=".Map">
 
-    <EditText
-        android:id="@+id/editTextAddress"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
+    <LinearLayout
+        android:id="@+id/linearLayout"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
         android:layout_marginTop="24dp"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
         android:background="#7C0505"
         android:backgroundTint="#7C0505"
-        android:textColor="#BCB5B5"
-        android:textSize="14sp"
-        android:hint="Type address name..."
-        android:textColorHint="@color/white"
-        />
+        android:layout_marginEnd="8dp"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/editTextAddress"
+            android:layout_width="300dp"
+            android:layout_height="34dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="3dp"
+            android:background="#7C0505"
+            android:backgroundTint="#7C0505"
+            android:textColor="#BCB5B5"
+            android:textSize="14sp"
+            android:hint="Type address name..."
+            android:textColorHint="@color/white"
+            android:imeOptions="actionSearch"/>
+
+        <ImageView
+            android:id="@+id/imageViewMagnify"
+            android:layout_gravity="end"
+            android:layout_width="100dp"
+            android:layout_height="34dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="3dp"
+            android:layout_marginEnd="24dp"
+            android:background="#7c0505"
+            android:backgroundTint="#7C0505"
+            android:src="@drawable/magnify"
+            />
+
+    </LinearLayout>
 
     <androidx.fragment.app.FragmentContainerView
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -38,7 +64,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@+id/editTextAddress"
+        app:layout_constraintTop_toBottomOf="@id/linearLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@id/buttonNavigation" />

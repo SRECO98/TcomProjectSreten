@@ -9,18 +9,27 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,6 +58,11 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 public class Map extends AppCompatActivity implements OnMapReadyCallback {
 
     SupportMapFragment mapFragment;
@@ -56,6 +70,8 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
     AppCompatButton buttonCompass;
     TextView settingsStateTextView;
     TextView permissionStateTextView;
+    EditText editTextAddress;
+    ImageView imageViewSearchAddress;
     boolean permissionRequested;
     boolean settingsChangeRequested;
     double currentLatitude;
@@ -86,16 +102,36 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         mapFragment.getMapAsync(Map.this);
         buttonNavigation = findViewById(R.id.buttonNavigation);
         buttonCompass = findViewById(R.id.buttonCompass);
+        editTextAddress = (EditText) findViewById(R.id.editTextAddress);
+        imageViewSearchAddress = (ImageView) findViewById(R.id.imageViewMagnify);
         permissionStateTextView = findViewById(R.id.permissionStateTextView);
         settingsStateTextView = findViewById(R.id.settingsStateTextView);
 
         buttonNavigation.setOnClickListener(v -> {
-
+            if(targetLocation == null){
+                Toast.makeText(this, "Please, choose your target location on map.", Toast.LENGTH_SHORT).show();
+            }else{
+                String uri = String.format(Locale.ENGLISH, "http://maps.google.com/maps?saddr=%f,%f(%s)&daddr=%f,%f (%s)", currentLatitude, currentLongitude, "Home Sweet Home", targetLocation.latitude, targetLocation.longitude, "Where the party is at");
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                intent.setPackage("com.google.android.apps.maps");
+                try {
+                    startActivity(intent);
+                }catch (ActivityNotFoundException ex){
+                    try {
+                        Intent unrestrictedIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                        startActivity(unrestrictedIntent);
+                    }catch (ActivityNotFoundException innerEx){
+                        Toast.makeText(this, "Please install a maps application.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
         });
 
         buttonCompass.setOnClickListener(v -> {
 
         });
+
+
 
         BitmapDrawable bitmapDraw = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.location_marker);
         BitmapDrawable bitmapDraw2 = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.flag);
@@ -151,7 +187,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         };
 
         getLastKnownLocation();
-
+        init();
     }
 
     @Override
@@ -174,8 +210,6 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                 targetLocation = latLng; //position of our target location.
             }
         });
-        //putMarkerOnMap();
-
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -298,6 +332,30 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
 
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 3000, null);
         cameraCalibrated = true;
+    }
+
+    private void init(){
+        Log.d("TAG", "init: initialazing");
+        imageViewSearchAddress.setOnClickListener(v -> searchByAddress()); //works
+    }
+
+    private void searchByAddress() {
+        Log.d("TAG","geoLocate: geoLocation");
+        String searchString = editTextAddress.getText().toString();
+        //Toast.makeText(this, searchString, Toast.LENGTH_SHORT).show();  //works
+        Geocoder geocoder = new Geocoder(Map.this);
+
+        List<Address> list = new ArrayList<>();
+        try {
+            list = geocoder.getFromLocationName(searchString, 1);
+        }catch (IOException exc){
+            Log.d("TAG", "geoLocation: IOException: " + exc.getMessage());
+        }
+
+        if(list.size() > 0){
+            Address address = list.get(0);
+            //targetLocation.latitude = address.getLatitude();
+        }
     }
 
     @Override
