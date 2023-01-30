@@ -66,16 +66,12 @@ import java.util.Locale;
 public class Map extends AppCompatActivity implements OnMapReadyCallback {
 
     SupportMapFragment mapFragment;
-    AppCompatButton buttonNavigation;
-    AppCompatButton buttonCompass;
-    TextView settingsStateTextView;
-    TextView permissionStateTextView;
+    AppCompatButton buttonNavigation, buttonCompass;
+    TextView settingsStateTextView, permissionStateTextView;
     EditText editTextAddress;
     ImageView imageViewSearchAddress;
-    boolean permissionRequested;
-    boolean settingsChangeRequested;
-    double currentLatitude;
-    double currentLongitude;
+    boolean permissionRequested, settingsChangeRequested;
+    double currentLatitude, currentLongitude, targetLatitude, targetLongitude;
     MenuItem buttonTarget;
 
     private static final int REQUEST_CHECK_SETTINGS = 1;
@@ -93,6 +89,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
     Bitmap markerBitmap, markerBitmap2;
     private boolean cameraCalibrated = false;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,10 +105,10 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         settingsStateTextView = findViewById(R.id.settingsStateTextView);
 
         buttonNavigation.setOnClickListener(v -> {
-            if(targetLocation == null){
+            if(targetLatitude == 0 || targetLongitude == 0){
                 Toast.makeText(this, "Please, choose your target location on map.", Toast.LENGTH_SHORT).show();
             }else{
-                String uri = String.format(Locale.ENGLISH, "http://maps.google.com/maps?saddr=%f,%f(%s)&daddr=%f,%f (%s)", currentLatitude, currentLongitude, "Home Sweet Home", targetLocation.latitude, targetLocation.longitude, "Where the party is at");
+                String uri = String.format(Locale.ENGLISH, "http://maps.google.com/maps?saddr=%f,%f(%s)&daddr=%f,%f (%s)", currentLatitude, currentLongitude, "Home Sweet Home", targetLatitude, targetLongitude, "Where the party is at");
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
                 intent.setPackage("com.google.android.apps.maps");
                 try {
@@ -126,12 +123,10 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                 }
             }
         });
-
+        init();
         buttonCompass.setOnClickListener(v -> {
 
         });
-
-
 
         BitmapDrawable bitmapDraw = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.location_marker);
         BitmapDrawable bitmapDraw2 = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.flag);
@@ -187,7 +182,6 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         };
 
         getLastKnownLocation();
-        init();
     }
 
     @Override
@@ -208,6 +202,8 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
             public void onMapClick(@NonNull LatLng latLng) {
                 drawMarker(latLng);
                 targetLocation = latLng; //position of our target location.
+                targetLatitude = targetLocation.latitude;
+                targetLongitude = targetLocation.longitude;
             }
         });
     }
@@ -308,6 +304,18 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
             marker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
         }
     }
+    private void drawMarker() {  //draw marker on target location by address
+        if(marker2 == null){
+            marker2 = googleMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(targetLatitude, targetLongitude))
+                    .title("You are here")
+                    .snippet("Your current location.")
+                    .alpha(0.8f)
+                    .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap2)));
+        }else{
+            marker2.setPosition(new LatLng(targetLatitude, targetLongitude));
+        }
+    }
     private void drawMarker(LatLng latLng) {   // Location when we press on map!
         if(marker2 == null){
             marker2 = googleMap.addMarker(new MarkerOptions()
@@ -322,9 +330,20 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
     }
 
 
-    private void onFlyButtonClick(){  //Pritisak na dugme iz actionbar-a aktivira ovu logiku.
+    private void onFlyButtonClick(){  //Press on button in action bard will start this fun.
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(demoLocation)
+                .zoom(17) //nivo priblizenja
+                .bearing(90)
+                .tilt(30)
+                .build();
+
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 3000, null);
+        cameraCalibrated = true;
+    }
+    private void onFlyButtonClick(LatLng latLng){  //Typing address in EditText will start this fun.
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(latLng)
                 .zoom(17) //nivo priblizenja
                 .bearing(90)
                 .tilt(30)
@@ -354,7 +373,10 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
 
         if(list.size() > 0){
             Address address = list.get(0);
-            //targetLocation.latitude = address.getLatitude();
+            targetLatitude = address.getLatitude();
+            targetLongitude = address.getLongitude();
+            drawMarker();
+            onFlyButtonClick(new LatLng(targetLatitude, targetLongitude));
         }
     }
 
@@ -387,5 +409,10 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         stopLocationUpdates();
     }
 
-
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+        System.exit(0);
+    }
 }

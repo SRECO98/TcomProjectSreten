@@ -37,7 +37,8 @@
             android:textSize="14sp"
             android:hint="Type address name..."
             android:textColorHint="@color/white"
-            android:imeOptions="actionSearch"/>
+            android:singleLine="true"
+            android:imeOptions="actionDone"/>
 
         <ImageView
             android:id="@+id/imageViewMagnify"
@@ -59,7 +60,7 @@
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="0dp"
-        android:layout_height="500dp"
+        android:layout_height="480dp"
         android:layout_marginBottom="40dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
@@ -76,7 +77,6 @@
         android:layout_marginStart="70dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="8dp"
         android:backgroundTint="#7C0505"
         android:text="NAVIGATION"
         android:textColor="#FFFFFF"
@@ -92,7 +92,6 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="70dp"
-        android:layout_marginBottom="8dp"
         android:backgroundTint="#7C0505"
         android:text="COMPASS"
         android:textColor="#FAF5F5"
@@ -111,7 +110,7 @@
         android:layout_marginBottom="8dp"
         android:textSize="11sp"
         android:gravity="center"
-        android:text="dsadasdsada"
+        android:text=""
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -126,7 +125,7 @@
         android:layout_marginBottom="8dp"
         android:textSize="11sp"
         android:gravity="center"
-        android:text="dsadasdsada"
+        android:text=""
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
