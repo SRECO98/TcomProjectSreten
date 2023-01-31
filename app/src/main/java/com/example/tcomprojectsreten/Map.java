@@ -125,7 +125,10 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         });
         init();
         buttonCompass.setOnClickListener(v -> {
-
+            Intent intent = new Intent(Map.this, Compass.class);
+            intent.putExtra("latitude", targetLatitude);
+            intent.putExtra("longitude", targetLongitude);
+            startActivity(intent);
         });
 
         BitmapDrawable bitmapDraw = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.location_marker);
@@ -155,16 +158,11 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                 super.onLocationResult(locationResult);
 
                 for (Location location: locationResult.getLocations()){
-                    if(!cameraCalibrated){
+                    if(!cameraCalibrated){ //makes camera move to our location only once.
                         initialMapCameraCalibration(location);
                     }else{
-                        /*if (location.getAccuracy() > 30) //izlazi ako nije precizan podatak
-                            return;*/
-
                         drawMarker(location);
-
                     }
-
                     //displayLocationData(location);
                 }
             }
