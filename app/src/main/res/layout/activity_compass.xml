@@ -7,16 +7,6 @@
     android:background="#070000"
     tools:context=".Compass">
 
-    <ImageView
-        android:id="@+id/backgroundImage"
-        android:layout_width="338dp"
-        android:layout_height="671dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.493"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/compass_back_layer" />
 
     <ImageView
         android:id="@+id/foregroundImage"
@@ -105,14 +95,14 @@
         android:textColor="@color/white" />
 
     <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="328dp"
-        android:layout_height="547dp"
+        android:id="@+id/arrowImageView"
+        android:layout_width="314dp"
+        android:layout_height="529dp"
+        android:rotation="0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/compass_back_layer"
-        android:rotation="280"/>
+        app:srcCompat="@drawable/arrow" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

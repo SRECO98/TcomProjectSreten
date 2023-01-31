@@ -81,6 +81,7 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
 
         permissionStateTextView = findViewById(R.id.permissionStateTextView);
         settingsStateTextView = findViewById(R.id.settingsStateTextView);
+        arrowImageView = findViewById(R.id.arrowImageView);
 
         azimuthTextView = findViewById(R.id.azimuthTextView);
         compassFrontImageView = findViewById(R.id.foregroundImage);
@@ -177,6 +178,7 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
             azimuth = ((int)azimuthDeg + 360) % 360;
             azimuthTextView.setText(String.valueOf(azimuth) + "°");
             compassFrontImageView.setRotation(-azimuth);
+            arrowImageView.setRotation((float) bearingFromLocOneToLocTwo + (-azimuth));
         }
     }
 

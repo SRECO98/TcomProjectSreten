@@ -298,7 +298,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                     .position(demoLocation)
                     .title("You are here")
                     .snippet("Your current location.")
-                    .alpha(0.8f)
+                    .alpha(0.9f)
                     .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap)));
         }else{
             marker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
@@ -310,7 +310,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                     .position(new LatLng(targetLatitude, targetLongitude))
                     .title("You are here")
                     .snippet("Your current location.")
-                    .alpha(0.8f)
+                    .alpha(0.9f)
                     .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap2)));
         }else{
             marker2.setPosition(new LatLng(targetLatitude, targetLongitude));
