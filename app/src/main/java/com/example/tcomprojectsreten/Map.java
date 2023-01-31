@@ -5,8 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
@@ -22,17 +20,12 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationAvailability;
@@ -70,7 +63,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
     TextView settingsStateTextView, permissionStateTextView;
     EditText editTextAddress;
     ImageView imageViewSearchAddress;
-    boolean permissionRequested, settingsChangeRequested, singledtonTextView;
+    boolean permissionRequested, settingsChangeRequested;
     double currentLatitude, currentLongitude, targetLatitude, targetLongitude;
     MenuItem buttonTarget;
 
@@ -95,45 +88,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(Map.this);
-        buttonNavigation = findViewById(R.id.buttonNavigation);
-        buttonCompass = findViewById(R.id.buttonCompass);
-        editTextAddress = (EditText) findViewById(R.id.editTextAddress);
-        imageViewSearchAddress = (ImageView) findViewById(R.id.imageViewMagnify);
-        permissionStateTextView = findViewById(R.id.permissionStateTextView);
-        settingsStateTextView = findViewById(R.id.settingsStateTextView);
-
-        buttonNavigation.setOnClickListener(v -> {
-            if(targetLatitude == 0 || targetLongitude == 0){
-                Toast.makeText(this, "Please, choose your target location on map.", Toast.LENGTH_SHORT).show();
-            }else{
-                String uri = String.format(Locale.ENGLISH, "http://maps.google.com/maps?saddr=%f,%f(%s)&daddr=%f,%f (%s)", currentLatitude, currentLongitude, "Home Sweet Home", targetLatitude, targetLongitude, "Where the party is at");
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-                intent.setPackage("com.google.android.apps.maps");
-                try {
-                    startActivity(intent);
-                }catch (ActivityNotFoundException ex){
-                    try {
-                        Intent unrestrictedIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-                        startActivity(unrestrictedIntent);
-                    }catch (ActivityNotFoundException innerEx){
-                        Toast.makeText(this, "Please install a maps application.", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        });
         init();
-        buttonCompass.setOnClickListener(v -> {
-            if(targetLatitude == 0 || targetLongitude == 0){
-                Toast.makeText(this, "Please, choose your target location on map.", Toast.LENGTH_SHORT).show();
-            }else{
-                Intent intent = new Intent(Map.this, Compass.class);
-                intent.putExtra("latitude", targetLatitude);
-                intent.putExtra("longitude", targetLongitude);
-                startActivity(intent);
-            }
-        });
 
         BitmapDrawable bitmapDraw = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.location_marker);
         BitmapDrawable bitmapDraw2 = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.flag);
@@ -151,13 +106,11 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                 .setMaxUpdateDelayMillis(1000)
                 .build();
         builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
-
         client = LocationServices.getSettingsClient(this);
-
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         locationCallback = new LocationCallback() {
-            @Override // novi pdoaci o lokaciji
+            @Override // new data about location
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 super.onLocationResult(locationResult);
 
@@ -182,7 +135,6 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                 }
             }
         };
-
         getLastKnownLocation();
     }
 
@@ -199,14 +151,11 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
             Log.e("gmap", "Can't find style. Error: ", e);
         }
 
-        this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(@NonNull LatLng latLng) {
-                drawMarker(latLng);
-                targetLocation = latLng; //position of our target location.
-                targetLatitude = targetLocation.latitude;
-                targetLongitude = targetLocation.longitude;
-            }
+        this.googleMap.setOnMapClickListener(latLng -> {
+            drawMarker(latLng);
+            targetLocation = latLng; //position of our target location.
+            targetLatitude = targetLocation.latitude;
+            targetLongitude = targetLocation.longitude;
         });
     }
 
@@ -216,32 +165,26 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         if(ContextCompat.checkSelfPermission(Map.this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             permissionStateTextView.setText("");
             task = client.checkLocationSettings(builder.build());
-            task.addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
-                @Override
-                public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                    settingsStateTextView.setText("");
-                    getLastKnownLocation();
-                }
+            task.addOnSuccessListener(this, locationSettingsResponse -> {
+                settingsStateTextView.setText("");
+                getLastKnownLocation();
             });
-            task.addOnFailureListener(this, new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    //this is when locatio is not available in phone
-                    if (e instanceof ResolvableApiException) {
-                        try {
-                            if(!settingsChangeRequested){
-                                ResolvableApiException resolvableApiException = (ResolvableApiException) e;
-                                resolvableApiException.startResolutionForResult(Map.this,
-                                        REQUEST_CHECK_SETTINGS);
-                                settingsChangeRequested = true;
-                            }
-                        }catch(IntentSender.SendIntentException sendIntentException){
-                            //ignore error
+            task.addOnFailureListener(this, e -> {
+                //this is when locatio is not available in phone
+                if (e instanceof ResolvableApiException) {
+                    try {
+                        if(!settingsChangeRequested){
+                            ResolvableApiException resolvableApiException = (ResolvableApiException) e;
+                            resolvableApiException.startResolutionForResult(Map.this,
+                                    REQUEST_CHECK_SETTINGS);
+                            settingsChangeRequested = true;
                         }
+                    }catch(IntentSender.SendIntentException sendIntentException){
+                        //ignore error
                     }
                 }
             });
-        }else{ //trazenje dozvole ako nema i ovo je samo jednom.
+        }else{ //asking for permission (singleton)
             if(!permissionRequested){
                 ActivityCompat.requestPermissions(Map.this,
                         new String[] {Manifest.permission.ACCESS_FINE_LOCATION},
@@ -256,20 +199,17 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
     }
 
     private void stopLocationUpdates(){
-        fusedLocationProviderClient.removeLocationUpdates(locationCallback); //prestanbak slusanja, saljemo callback hjer preko njega ide dojava o lokaciji
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback); //stop listening about location.
     }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private void getLastKnownLocation() throws SecurityException{
-        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if(location != null){
-                    displayLocationData(location);
-                    drawMarker(location);
-                }else{
-                    Toast.makeText(Map.this, "There is no last known location.", Toast.LENGTH_SHORT).show();
-                }
+    private void getLastKnownLocation() throws SecurityException{ //last familiar location.
+        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if(location != null){
+                displayLocationData(location);
+                drawMarker(location);
+            }else{
+                Toast.makeText(Map.this, "There is no last known location.", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -280,7 +220,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         demoLocation = new LatLng(currentLatitude, currentLongitude);
     }
 
-    private void initialMapCameraCalibration(Location location) {
+    private void initialMapCameraCalibration(Location location) { //moving camera at start to our location.
         demoLocation = new LatLng(location.getLatitude(), location.getLongitude());
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(demoLocation)
@@ -330,7 +270,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
     }
 
 
-    private void onFlyButtonClick(){  //Press on button in action bard will start this fun.
+    private void onFlyButtonClick(){  //Press on button in action bar will start this fun.
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(demoLocation)
                 .zoom(17) //nivo priblizenja
@@ -341,7 +281,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 3000, null);
         cameraCalibrated = true;
     }
-    private void onFlyButtonClick(LatLng latLng){  //Typing address in EditText will start this fun.
+    private void onFlyButtonClick(LatLng latLng){  //Typing address in EditText and press search button will start this fun.
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
                 .zoom(17) //nivo priblizenja
@@ -351,11 +291,6 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
 
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 3000, null);
         cameraCalibrated = true;
-    }
-
-    private void init(){
-        Log.d("TAG", "init: initialazing");
-        imageViewSearchAddress.setOnClickListener(v -> searchByAddress()); //works
     }
 
     private void searchByAddress() {
@@ -414,5 +349,52 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         super.onBackPressed();
         finish();
         System.exit(0);
+    }
+
+    /* Button clicks and references*/
+    private void init(){
+
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(Map.this);
+        buttonNavigation = findViewById(R.id.buttonNavigation);
+        buttonCompass = findViewById(R.id.buttonCompass);
+        editTextAddress = (EditText) findViewById(R.id.editTextAddress);
+        imageViewSearchAddress = (ImageView) findViewById(R.id.imageViewMagnify);
+        permissionStateTextView = findViewById(R.id.permissionStateTextView);
+        settingsStateTextView = findViewById(R.id.settingsStateTextView);
+
+        Log.d("TAG", "init: initialazing");
+        imageViewSearchAddress.setOnClickListener(v -> searchByAddress()); //works
+
+        buttonCompass.setOnClickListener(v -> {
+            if(targetLatitude == 0 || targetLongitude == 0){
+                Toast.makeText(this, "Please, choose your target location on map.", Toast.LENGTH_SHORT).show();
+            }else{
+                Intent intent = new Intent(Map.this, Compass.class);
+                intent.putExtra("latitude", targetLatitude);
+                intent.putExtra("longitude", targetLongitude);
+                startActivity(intent);
+            }
+        });
+
+        buttonNavigation.setOnClickListener(v -> {
+            if(targetLatitude == 0 || targetLongitude == 0){
+                Toast.makeText(this, "Please, choose your target location on map.", Toast.LENGTH_SHORT).show();
+            }else{
+                String uri = String.format(Locale.ENGLISH, "http://maps.google.com/maps?saddr=%f,%f(%s)&daddr=%f,%f (%s)", currentLatitude, currentLongitude, "Home Sweet Home", targetLatitude, targetLongitude, "Where the party is at");
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                intent.setPackage("com.google.android.apps.maps");
+                try {
+                    startActivity(intent);
+                }catch (ActivityNotFoundException ex){
+                    try {
+                        Intent unrestrictedIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                        startActivity(unrestrictedIntent);
+                    }catch (ActivityNotFoundException innerEx){
+                        Toast.makeText(this, "Please install a maps application.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
     }
 }

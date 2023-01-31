@@ -120,9 +120,9 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
                 }
                 roundDistanceValue = (double) Math.round(currentDistance * 100) / 100; //making result value more beautiful, (2 decimals).
                 if(roundDistanceValue > 1.0){
-                    distanceValueTextView.setText(String.valueOf(roundDistanceValue) + "km");
+                    distanceValueTextView.setText(roundDistanceValue + "km");
                 }else{
-                    distanceValueTextView.setText(String.valueOf(roundDistanceValue * 1000) + "m");
+                    distanceValueTextView.setText(roundDistanceValue * 1000 + "m");
                 }
             }
 
@@ -176,7 +176,7 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
             float azimuthRad = SensorManager.getOrientation(rotationMatrix, orientation)[0]; //value of azimuth value is returning in radians.
             double azimuthDeg = Math.toDegrees(azimuthRad);
             azimuth = ((int)azimuthDeg + 360) % 360;
-            azimuthTextView.setText(String.valueOf(azimuth) + "°");
+            azimuthTextView.setText(azimuth + "°");
             compassFrontImageView.setRotation(-azimuth);
             arrowImageView.setRotation((float) bearingFromLocOneToLocTwo + (-azimuth));
         }
@@ -193,30 +193,24 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
         if(ContextCompat.checkSelfPermission(Compass.this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             permissionStateTextView.setText("");
             task = client.checkLocationSettings(builder.build());
-            task.addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
-                @Override
-                public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                    settingsStateTextView.setText("");
-                    getLastKnownLocation();
-                }
+            task.addOnSuccessListener(this, locationSettingsResponse -> {
+                settingsStateTextView.setText("");
+                getLastKnownLocation();
             });
-            task.addOnFailureListener(this, new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    //this is when locatio is not available in phone
-                    if (e instanceof ResolvableApiException) {
-                        try {
-                            if(!settingsChangeRequested){
-                                ResolvableApiException resolvableApiException = (ResolvableApiException) e;
-                                resolvableApiException.startResolutionForResult(Compass.this,
-                                        REQUEST_CHECK_SETTINGS);
-                                settingsChangeRequested = true;
-                            }else{
-                                settingsStateTextView.setText("Please enable Location data in settings.");
-                            }
-                        }catch(IntentSender.SendIntentException sendIntentException){
-                            //ignore error
+            task.addOnFailureListener(this, e -> {
+                //this is when locatio is not available in phone
+                if (e instanceof ResolvableApiException) {
+                    try {
+                        if(!settingsChangeRequested){
+                            ResolvableApiException resolvableApiException = (ResolvableApiException) e;
+                            resolvableApiException.startResolutionForResult(Compass.this,
+                                    REQUEST_CHECK_SETTINGS);
+                            settingsChangeRequested = true;
+                        }else{
+                            settingsStateTextView.setText("Please enable Location data in settings.");
                         }
+                    }catch(IntentSender.SendIntentException sendIntentException){
+                        //ignore error
                     }
                 }
             });
@@ -239,14 +233,11 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
     }
 
     private void getLastKnownLocation() throws SecurityException{
-        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if(location != null){
-                    currentLocation = location;
-                }else{
-                    Toast.makeText(Compass.this, "There is no last known location.", Toast.LENGTH_SHORT).show();
-                }
+        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if(location != null){
+                currentLocation = location;
+            }else{
+                Toast.makeText(Compass.this, "There is no last known location.", Toast.LENGTH_SHORT).show();
             }
         });
     }
