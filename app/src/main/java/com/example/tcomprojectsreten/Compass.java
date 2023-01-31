@@ -71,6 +71,8 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
     double targetLongitude;
     double currentDistance;
     double roundDistanceValue;
+    double bearingFromLocOneToLocTwo;
+    ImageView arrowImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +81,6 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
 
         permissionStateTextView = findViewById(R.id.permissionStateTextView);
         settingsStateTextView = findViewById(R.id.settingsStateTextView);
-        distanceValueTextView = findViewById(R.id.textViewValue);
 
         azimuthTextView = findViewById(R.id.azimuthTextView);
         compassFrontImageView = findViewById(R.id.foregroundImage);
@@ -87,15 +88,17 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
         magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        /*Getting Intent values*/
+        /*Getting Intent values and location values*/
         Intent intent = getIntent();
         targetLatitude = intent.getDoubleExtra("latitude", 0);
         targetLongitude = intent.getDoubleExtra("longitude", 0);
+        distanceValueTextView = findViewById(R.id.textViewValue);
+        //arrowImageView = findViewById(R.id.aaaa)
 
         /* Location logic*/////////////////////////////////////////////////////////////////////////////////////////////////
         locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000L)
                 .setWaitForAccurateLocation(true)
-                .setMinUpdateIntervalMillis(500)
+                .setMinUpdateIntervalMillis(10000)
                 .setMaxUpdateDelayMillis(1000)
                 .build();
         builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
@@ -111,9 +114,15 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
                     currentLocation = location; //Our current location.
                     //calculating distance between target and our location.
                     currentDistance = distanceBetweenLocations(currentLocation.getLatitude(), currentLocation.getLongitude(), targetLatitude,  targetLongitude);
+                    //calculating angel in deegres.
+                    bearingFromLocOneToLocTwo = ((int)(calculateBearing(currentLocation.getLatitude(), currentLocation.getLongitude(), targetLatitude,  targetLongitude)) + 360) % 360;
                 }
                 roundDistanceValue = (double) Math.round(currentDistance * 100) / 100; //making result value more beautiful, (2 decimals).
-                distanceValueTextView.setText(String.valueOf(roundDistanceValue * 1000) + "m");
+                if(roundDistanceValue > 1.0){
+                    distanceValueTextView.setText(String.valueOf(roundDistanceValue) + "km");
+                }else{
+                    distanceValueTextView.setText(String.valueOf(roundDistanceValue * 1000) + "m");
+                }
             }
 
             @Override // kada dodje do promjene raspolozivosti podataka o lokaciji
@@ -178,7 +187,7 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private void startLocationUpdates(){
-        //slusanje novih vrednosti stalno
+        //listeing to new values all the time
         if(ContextCompat.checkSelfPermission(Compass.this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             permissionStateTextView.setText("");
             task = client.checkLocationSettings(builder.build());
@@ -209,7 +218,7 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
                     }
                 }
             });
-        }else{ //trazenje dozvole ako nema i ovo je samo jednom.
+        }else{ //asking for permission if there is no permission currently and this is singleton fun
             if(!permissionRequested){
                 ActivityCompat.requestPermissions(Compass.this,
                         new String[] {Manifest.permission.ACCESS_FINE_LOCATION},
@@ -239,7 +248,7 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
             }
         });
     }
-    /* Logic for calculating disatnce between two locations on earth.*////////////////////
+    /* Logic for calculating distance between two locations on earth.*////////////////////
     private static final int EARTH_RADIUS = 6371; // Approx Earth radius in KM
 
     public static double distanceBetweenLocations(double startLat, double startLong, double endLat, double endLong) {
@@ -260,4 +269,15 @@ public class Compass extends AppCompatActivity implements SensorEventListener {
         return Math.pow(Math.sin(val / 2), 2);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////
+    /*Bearing from one location to second location in angles..//////////////////*/
+
+   double calculateBearing(double lat1, double lon1, double lat2, double lon2) {
+        double dLon = Math.toRadians(lon2 - lon1);
+        lat1 = Math.toRadians(lat1);
+        lat2 = Math.toRadians(lat2);
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        return Math.toDegrees(Math.atan2(y, x));
+    }
+
 }

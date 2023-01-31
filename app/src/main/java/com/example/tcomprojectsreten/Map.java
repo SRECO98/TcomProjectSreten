@@ -70,7 +70,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
     TextView settingsStateTextView, permissionStateTextView;
     EditText editTextAddress;
     ImageView imageViewSearchAddress;
-    boolean permissionRequested, settingsChangeRequested;
+    boolean permissionRequested, settingsChangeRequested, singledtonTextView;
     double currentLatitude, currentLongitude, targetLatitude, targetLongitude;
     MenuItem buttonTarget;
 
@@ -125,10 +125,14 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
         });
         init();
         buttonCompass.setOnClickListener(v -> {
-            Intent intent = new Intent(Map.this, Compass.class);
-            intent.putExtra("latitude", targetLatitude);
-            intent.putExtra("longitude", targetLongitude);
-            startActivity(intent);
+            if(targetLatitude == 0 || targetLongitude == 0){
+                Toast.makeText(this, "Please, choose your target location on map.", Toast.LENGTH_SHORT).show();
+            }else{
+                Intent intent = new Intent(Map.this, Compass.class);
+                intent.putExtra("latitude", targetLatitude);
+                intent.putExtra("longitude", targetLongitude);
+                startActivity(intent);
+            }
         });
 
         BitmapDrawable bitmapDraw = (BitmapDrawable) ContextCompat.getDrawable(this, R.drawable.location_marker);
@@ -136,7 +140,7 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
 
         Bitmap b = bitmapDraw.getBitmap();
         Bitmap b2 = bitmapDraw2.getBitmap();
-        int width = 120;
+        int width = 105;
         int height = 120;
         markerBitmap = Bitmap.createScaledBitmap(b, width, height, false);
         markerBitmap2 = Bitmap.createScaledBitmap(b2, width, height, false);
@@ -230,8 +234,6 @@ public class Map extends AppCompatActivity implements OnMapReadyCallback {
                                 resolvableApiException.startResolutionForResult(Map.this,
                                         REQUEST_CHECK_SETTINGS);
                                 settingsChangeRequested = true;
-                            }else{
-                                settingsStateTextView.setText("Please enable Location data in settings.");
                             }
                         }catch(IntentSender.SendIntentException sendIntentException){
                             //ignore error

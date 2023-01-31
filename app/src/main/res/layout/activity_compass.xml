@@ -104,4 +104,15 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:textColor="@color/white" />
 
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="328dp"
+        android:layout_height="547dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/compass_back_layer"
+        android:rotation="280"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
